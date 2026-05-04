@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FIFA Analytics — Timeline</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="dashboard.css"/>
+  <style>
+    .timeline-wrap{position:relative;padding:0 0 40px 0;}
+    .timeline-wrap::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--border);transform:translateX(-50%);}
+
+    .tl-item{display:flex;align-items:flex-start;gap:0;margin-bottom:32px;position:relative;}
+    .tl-item:nth-child(odd){flex-direction:row;}
+    .tl-item:nth-child(even){flex-direction:row-reverse;}
+
+    .tl-card{width:calc(50% - 40px);background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;
+      transition:box-shadow .25s,transform .25s;cursor:pointer;animation:slideInLeft .5s ease both;}
+    .tl-item:nth-child(even) .tl-card{animation-name:slideInRight;}
+    @keyframes slideInLeft{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:translateX(0);}}
+    @keyframes slideInRight{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+    .tl-card:hover{box-shadow:0 6px 22px rgba(0,0,0,.1);transform:translateY(-2px);}
+
+    .tl-dot-wrap{width:80px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding-top:16px;}
+    .tl-dot{width:42px;height:42px;border-radius:50%;background:var(--green-mid);border:3px solid white;
+      box-shadow:0 0 0 2px var(--green-mid);display:flex;align-items:center;justify-content:center;
+      font-size:11px;font-weight:700;color:white;z-index:1;flex-shrink:0;}
+    .tl-dot.special{background:var(--gold);box-shadow:0 0 0 2px var(--gold);}
+
+    .tl-year{font-size:11px;font-weight:700;color:var(--green-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+    .tl-host{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);margin-bottom:2px;}
+    .tl-winner-row{display:flex;align-items:center;gap:8px;margin:10px 0;}
+    .tl-flag{font-size:24px;}
+    .tl-winner-name{font-size:14px;font-weight:600;}
+    .tl-winner-lbl{font-size:11px;color:var(--text-muted);}
+    .tl-score{font-size:13px;font-weight:600;background:var(--green-light);color:var(--green-mid);padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:10px;}
+    .tl-stats{display:flex;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+    .tl-stat{text-align:center;}
+    .tl-stat-val{font-size:15px;font-weight:700;color:var(--text);}
+    .tl-stat-lbl{font-size:10px;color:var(--text-muted);margin-top:1px;}
+    .tl-note{font-size:12px;color:var(--text-muted);margin-top:8px;font-style:italic;line-height:1.5;}
+    .milestone-badge{font-size:10px;background:var(--gold-light);color:var(--gold);padding:2px 8px;border-radius:10px;font-weight:600;display:inline-block;margin-bottom:6px;}
+
+    .summary-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:30px;}
+    .sum-box{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;text-align:center;}
+    .sum-val{font-size:22px;font-weight:700;color:var(--green-mid);}
+    .sum-lbl{font-size:11.5px;color:var(--text-muted);margin-top:4px;}
+
+    .goals-chart-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;margin-bottom:30px;}
+    .goals-bars{display:flex;align-items:flex-end;gap:4px;height:120px;margin-top:16px;}
+    .g-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;}
+    .g-bar{width:100%;border-radius:4px 4px 0 0;background:var(--green-light);border:1.5px solid #b2d8bf;transition:all .3s;min-height:4px;}
+    .g-bar.peak{background:var(--green-mid);border-color:var(--green-dark);}
+    .g-col:hover .g-bar{background:var(--green-mid);}
+    .g-col span{font-size:9px;color:var(--text-muted);white-space:nowrap;}
+    .g-col .g-num{font-size:10px;font-weight:700;color:var(--text-muted);}
+  </style>
+  <script src="api.js"></script>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-ball">⚽</span>
+    <div><span class="logo-title">FIFA Analytics</span><span class="logo-sub">SE Project</span></div>
+  </div>
+  <nav class="nav">
+    <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+    <a href="matches.html" class="nav-item"><span class="nav-icon">⚽</span> Matches</a>
+    <a href="players.html" class="nav-item"><span class="nav-icon">👤</span> Players</a>
+    <a href="timeline.html" class="nav-item active"><span class="nav-icon">📈</span> Timeline</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="avatar">MU</div>
+      <div><span class="user-name">Mahindra Univ</span><span class="user-role">Demo Mode</span></div>
+    </div>
+    <a href="login.html" class="logout-btn">← Logout</a>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div>
+      <h1 class="page-title">Tournament Timeline</h1>
+      <p class="page-sub">A visual journey through every FIFA World Cup · 1930 – 2022</p>
+    </div>
+  </header>
+
+  <div class="summary-strip">
+    <div class="sum-box"><div class="sum-val">22</div><div class="sum-lbl">Tournaments</div></div>
+    <div class="sum-box"><div class="sum-val">2,548</div><div class="sum-lbl">Total Goals</div></div>
+    <div class="sum-box"><div class="sum-val">964</div><div class="sum-lbl">Matches</div></div>
+    <div class="sum-box"><div class="sum-val">83</div><div class="sum-lbl">Nations</div></div>
+    <div class="sum-box"><div class="sum-val">92</div><div class="sum-lbl">Years of History</div></div>
+  </div>
+
+  <div class="goals-chart-card">
+    <div class="chart-header">
+      <h3>Goals Per Tournament (1930–2022)</h3>
+      <span class="badge">Hover to explore</span>
+    </div>
+    <div class="goals-bars" id="goalsChart"></div>
+  </div>
+
+  <div class="timeline-wrap" id="timeline"></div>
+</main>
+
+<script>
+const tournaments = [
+  {year:1930,host:'Uruguay',winner:'Uruguay',flag:'🇺🇾',runnerup:'Argentina',rflag:'🇦🇷',score:'4–2',teams:13,matches:18,goals:70,milestone:'First ever World Cup',special:true,note:'Held in Uruguay to celebrate the country\'s centenary of independence.'},
+  {year:1950,host:'Brazil',winner:'Uruguay',flag:'🇺🇾',runnerup:'Brazil',rflag:'🇧🇷',score:'2–1',teams:13,matches:22,goals:88,milestone:'Highest ever attendance',special:true,note:'El Maracanazo — Uruguay shocked the host nation in front of 200,000 fans.'},
+  {year:1954,host:'Switzerland',winner:'West Germany',flag:'🇩🇪',runnerup:'Hungary',rflag:'🇭🇺',score:'3–2',teams:16,matches:26,goals:140,milestone:'Most goals per match',special:true,note:'The Miracle of Bern. Hungary was unbeaten in 4 years, then lost the final.'},
+  {year:1958,host:'Sweden',winner:'Brazil',flag:'🇧🇷',runnerup:'Sweden',rflag:'🇸🇪',score:'5–2',teams:16,matches:35,goals:126,note:'17-year-old Pelé announced himself with a hat-trick in the semi-final.'},
+  {year:1962,host:'Chile',winner:'Brazil',flag:'🇧🇷',runnerup:'Czechoslovakia',rflag:'🇨🇿',score:'3–1',teams:16,matches:32,goals:89,note:'Brazil retained the title despite Pelé being injured early.'},
+  {year:1966,host:'England',winner:'England',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',runnerup:'West Germany',rflag:'🇩🇪',score:'4–2 AET',teams:16,matches:32,goals:89,note:'Geoff Hurst\'s hat-trick remains the only one in a World Cup final.'},
+  {year:1970,host:'Mexico',winner:'Brazil',flag:'🇧🇷',runnerup:'Italy',rflag:'🇮🇹',score:'4–1',teams:16,matches:32,goals:95,milestone:'First colour TV',special:true,note:'Brazil\'s 1970 side is considered the best national team ever.'},
+  {year:1974,host:'West Germany',winner:'West Germany',flag:'🇩🇪',runnerup:'Netherlands',rflag:'🇳🇱',score:'2–1',teams:16,matches:38,goals:97,note:'Total Football Netherlands lost the final. Cruyff never won a World Cup.'},
+  {year:1978,host:'Argentina',winner:'Argentina',flag:'🇦🇷',runnerup:'Netherlands',rflag:'🇳🇱',score:'3–1 AET',teams:16,matches:38,goals:102,note:'Argentina\'s first title with iconic ticker-tape celebration.'},
+  {year:1982,host:'Spain',winner:'Italy',flag:'🇮🇹',runnerup:'West Germany',rflag:'🇩🇪',score:'3–1',teams:24,matches:52,goals:146,milestone:'Expanded to 24 teams',special:true,note:'Paolo Rossi scored 6 goals in 3 matches after a 2-year ban.'},
+  {year:1986,host:'Mexico',winner:'Argentina',flag:'🇦🇷',runnerup:'West Germany',rflag:'🇩🇪',score:'3–2',teams:24,matches:52,goals:132,milestone:'Hand of God',special:true,note:'Maradona\'s tournament — both Hand of God and Goal of the Century.'},
+  {year:1990,host:'Italy',winner:'West Germany',flag:'🇩🇪',runnerup:'Argentina',rflag:'🇦🇷',score:'1–0',teams:24,matches:52,goals:115,note:'Lowest goals per game since 1930. West Germany\'s last before reunification.'},
+  {year:1994,host:'USA',winner:'Brazil',flag:'🇧🇷',runnerup:'Italy',rflag:'🇮🇹',score:'0–0 (3-2 pens)',teams:24,matches:52,goals:141,milestone:'Highest attendance',special:true,note:'Record 3.5 million attendance. First final decided by penalties.'},
+  {year:1998,host:'France',winner:'France',flag:'🇫🇷',runnerup:'Brazil',rflag:'🇧🇷',score:'3–0',teams:32,matches:64,goals:171,milestone:'Expanded to 32 teams',special:true,note:'Zidane\'s two headers won the final. France\'s first title.'},
+  {year:2002,host:'South Korea / Japan',winner:'Brazil',flag:'🇧🇷',runnerup:'Germany',rflag:'🇩🇪',score:'2–0',teams:32,matches:64,goals:161,milestone:'First in Asia',special:true,note:'First World Cup in Asia. Ronaldo scored twice in the final.'},
+  {year:2006,host:'Germany',winner:'Italy',flag:'🇮🇹',runnerup:'France',rflag:'🇫🇷',score:'1–1 (5-3 pens)',teams:32,matches:64,goals:147,note:'Zidane\'s infamous headbutt in his final match.'},
+  {year:2010,host:'South Africa',winner:'Spain',flag:'🇪🇸',runnerup:'Netherlands',rflag:'🇳🇱',score:'1–0 AET',teams:32,matches:64,goals:145,milestone:'First in Africa',special:true,note:'First World Cup in Africa. Iniesta\'s goal gave Spain their first title.'},
+  {year:2014,host:'Brazil',winner:'Germany',flag:'🇩🇪',runnerup:'Argentina',rflag:'🇦🇷',score:'1–0 AET',teams:32,matches:64,goals:171,milestone:'7-1 Mineirazo',special:true,note:'Germany\'s 7-1 demolition of Brazil remains the most shocking result ever.'},
+  {year:2018,host:'Russia',winner:'France',flag:'🇫🇷',runnerup:'Croatia',rflag:'🇭🇷',score:'4–2',teams:32,matches:64,goals:169,note:'Mbappé became only the second teenager after Pelé to score in a final.'},
+  {year:2022,host:'Qatar',winner:'Argentina',flag:'🇦🇷',runnerup:'France',rflag:'🇫🇷',score:'3–3 (4-2 pens)',teams:32,matches:64,goals:172,milestone:'First in Middle East',special:true,note:'Messi finally won the World Cup in the greatest final ever.'},
+];
+
+const maxGoals = Math.max(...tournaments.map(t=>t.goals));
+document.getElementById('goalsChart').innerHTML = tournaments.map(t=>`
+  <div class="g-col" title="${t.year}: ${t.goals} goals">
+    <div class="g-num">${t.goals}</div>
+    <div class="g-bar${t.goals===maxGoals?' peak':''}" style="height:${t.goals/maxGoals*100}%"></div>
+    <span>${t.year}</span>
+  </div>`).join('');
+
+document.getElementById('timeline').innerHTML = [...tournaments].reverse().map((t,i)=>`
+  <div class="tl-item" style="animation-delay:${i*0.06}s">
+    <div class="tl-card">
+      ${t.milestone?`<div class="milestone-badge">★ ${t.milestone}</div><br>`:''}
+      <div class="tl-year">${t.year} · ${t.host}</div>
+      <div class="tl-host">${t.host} World Cup</div>
+      <div class="tl-winner-row">
+        <span class="tl-flag">${t.flag}</span>
+        <div><div class="tl-winner-name">${t.winner}</div><div class="tl-winner-lbl">Champion</div></div>
+        <span style="margin:0 8px;color:var(--text-muted);font-size:12px;">vs</span>
+        <span class="tl-flag">${t.rflag}</span>
+        <div><div class="tl-winner-name">${t.runnerup}</div><div class="tl-winner-lbl">Runner-up</div></div>
+      </div>
+      <span class="tl-score">Final: ${t.score}</span>
+      <div class="tl-note">${t.note}</div>
+      <div class="tl-stats">
+        <div class="tl-stat"><div class="tl-stat-val">${t.teams}</div><div class="tl-stat-lbl">Teams</div></div>
+        <div class="tl-stat"><div class="tl-stat-val">${t.matches}</div><div class="tl-stat-lbl">Matches</div></div>
+        <div class="tl-stat"><div class="tl-stat-val">${t.goals}</div><div class="tl-stat-lbl">Goals</div></div>
+        <div class="tl-stat"><div class="tl-stat-val">${(t.goals/t.matches).toFixed(1)}</div><div class="tl-stat-lbl">Goals/Match</div></div>
+      </div>
+    </div>
+    <div class="tl-dot-wrap">
+      <div class="tl-dot${t.special?' special':''}">${t.year.toString().slice(2)}</div>
+    </div>
+    <div style="width:calc(50% - 40px);"></div>
+  </div>`).join('');
+</script>
+</body>
+</html>

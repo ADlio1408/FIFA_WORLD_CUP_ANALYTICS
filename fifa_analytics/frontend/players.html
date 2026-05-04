@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FIFA Analytics — Players</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="dashboard.css"/>
+  <style>
+    .tabs{display:flex;gap:4px;margin-bottom:24px;background:white;border:1px solid var(--border);border-radius:var(--radius);padding:4px;width:fit-content;}
+    .tab{padding:8px 22px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--text-muted);transition:all .2s;font-family:'DM Sans',sans-serif;}
+    .tab.active{background:var(--green-mid);color:white;}
+    .tab-panel{display:none;animation:fadeIn .3s ease both;}
+    .tab-panel.active{display:block;}
+
+    .podium-row{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:16px;margin-bottom:26px;align-items:end;}
+    .podium-card{border-radius:var(--radius);padding:26px 20px;text-align:center;border:1px solid var(--border);transition:box-shadow .2s,transform .2s;animation:cardIn .5s ease both;}
+    .podium-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.1);transform:translateY(-3px);}
+    @keyframes cardIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+    .podium-card.gold{background:linear-gradient(145deg,#fffef7,#fdf5dc);border-color:#e8c96a;animation-delay:.1s;}
+    .podium-card.silver{background:linear-gradient(145deg,#fafafa,#f0f1f3);border-color:#c8cdd2;animation-delay:.2s;}
+    .podium-card.bronze{background:linear-gradient(145deg,#fffaf7,#fdeee6);border-color:#ddb99a;animation-delay:.3s;}
+    .pod-medal{font-size:36px;margin-bottom:8px;}
+    .pod-name{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:4px;color:var(--text);}
+    .pod-country{font-size:13px;color:var(--text-muted);margin-bottom:16px;}
+    .pod-goals{font-size:52px;font-weight:700;line-height:1;color:var(--green-mid);}
+    .pod-glbl{font-size:11px;color:var(--text-muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;}
+    .pod-chips{display:flex;justify-content:center;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,.08);}
+    .pod-chip{text-align:center;}
+    .pod-chip-val{font-size:14px;font-weight:700;}
+    .pod-chip-lbl{font-size:10px;color:var(--text-muted);margin-top:1px;}
+
+    .scorers-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;overflow-x:auto;}
+    .scorer-row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--border);}
+    .scorer-row:last-child{border-bottom:none;}
+    .scorer-row:hover{padding:13px 8px;margin:0 -8px;border-radius:8px;background:var(--green-light);border-bottom-color:transparent;}
+    .s-rank{width:26px;height:26px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text-muted);flex-shrink:0;}
+    .s-rank.top3{background:var(--gold-light);color:var(--gold);}
+    .s-flag{font-size:22px;flex-shrink:0;}
+    .s-info{width:170px;flex-shrink:0;}
+    .s-name{font-size:14px;font-weight:600;}
+    .s-meta{font-size:11.5px;color:var(--text-muted);margin-top:2px;}
+    .s-bar-wrap{flex:1;min-width:120px;}
+    .s-bar-bg{height:10px;background:var(--bg);border-radius:5px;overflow:hidden;}
+    .s-bar-fill{height:100%;background:var(--green-mid);border-radius:5px;width:0;transition:width 1s cubic-bezier(.4,0,.2,1);}
+    .s-goals{font-size:18px;font-weight:700;color:var(--green-mid);width:30px;text-align:right;flex-shrink:0;}
+    .s-matches{font-size:12px;color:var(--text-muted);width:70px;text-align:right;flex-shrink:0;}
+    .s-gpm{font-size:11px;color:var(--text-muted);width:55px;text-align:right;flex-shrink:0;}
+
+    .country-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+    .country-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:box-shadow .2s;animation:cardIn .4s ease both;}
+    .country-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);}
+    .cc-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+    .cc-flag{font-size:32px;}
+    .cc-name{font-size:15px;font-weight:600;}
+    .cc-titles{font-size:11px;color:var(--text-muted);margin-top:2px;}
+    .cc-stat-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:13px;}
+    .cc-stat-label{color:var(--text-muted);}
+    .cc-stat-val{font-weight:700;color:var(--text);}
+    .cc-bar-bg{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:10px;}
+    .cc-bar-fill{height:100%;background:var(--green-mid);border-radius:3px;width:0;transition:width 1s cubic-bezier(.4,0,.2,1);}
+
+    .records-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+    .record-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:22px;animation:cardIn .4s ease both;transition:box-shadow .2s;}
+    .record-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);}
+    .rec-icon{font-size:28px;margin-bottom:10px;}
+    .rec-title{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:6px;font-weight:600;}
+    .rec-val{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);margin-bottom:4px;}
+    .rec-desc{font-size:13px;color:var(--text-muted);}
+    .rec-highlight{font-size:12px;background:var(--gold-light);color:var(--gold);padding:3px 10px;border-radius:20px;font-weight:600;display:inline-block;margin-top:8px;}
+  </style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-ball">⚽</span>
+    <div><span class="logo-title">FIFA Analytics</span><span class="logo-sub">SE Project</span></div>
+  </div>
+  <nav class="nav">
+    <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+    <a href="matches.html" class="nav-item"><span class="nav-icon">⚽</span> Matches</a>
+    <a href="players.html" class="nav-item active"><span class="nav-icon">👤</span> Players</a>
+    <a href="timeline.html" class="nav-item"><span class="nav-icon">📈</span> Timeline</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="avatar">MU</div>
+      <div><span class="user-name">Mahindra Univ</span><span class="user-role">Demo Mode</span></div>
+    </div>
+    <a href="login.html" class="logout-btn">← Logout</a>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div>
+      <h1 class="page-title">Player Analytics</h1>
+      <p class="page-sub">All-time top scorers, country stats & World Cup records</p>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('scorers',this)">🥅 Top Scorers</button>
+    <button class="tab" onclick="switchTab('countries',this)">🌍 Countries</button>
+    <button class="tab" onclick="switchTab('records',this)">📜 Records</button>
+  </div>
+
+  <!-- TOP SCORERS TAB -->
+  <div class="tab-panel active" id="tab-scorers">
+    <div class="podium-row" id="podium">
+      <div style="text-align:center;padding:40px;color:var(--text-muted)">Loading…</div>
+    </div>
+    <div class="scorers-card">
+      <div class="chart-header">
+        <h3>All-Time Top Goal Scorers</h3>
+        <span class="badge" id="scorers-count">Loading</span>
+      </div>
+      <div id="scorersList"></div>
+    </div>
+  </div>
+
+  <!-- COUNTRIES TAB -->
+  <div class="tab-panel" id="tab-countries">
+    <div class="country-grid" id="countryGrid">
+      <div style="text-align:center;padding:40px;color:var(--text-muted)">Loading…</div>
+    </div>
+  </div>
+
+  <!-- RECORDS TAB -->
+  <div class="tab-panel" id="tab-records">
+    <div class="records-grid">
+      <div class="record-card">
+        <div class="rec-icon">🥅</div>
+        <div class="rec-title">All-Time Top Scorer</div>
+        <div class="rec-val">Miroslav Klose</div>
+        <div class="rec-desc">Germany · 16 goals in 24 matches</div>
+        <span class="rec-highlight">2002 – 2014</span>
+      </div>
+      <div class="record-card">
+        <div class="rec-icon">⚡</div>
+        <div class="rec-title">Most Goals in One Tournament</div>
+        <div class="rec-val">Just Fontaine — 13</div>
+        <div class="rec-desc">France · 1958 World Cup (6 matches)</div>
+        <span class="rec-highlight">2.17 goals/game</span>
+      </div>
+      <div class="record-card">
+        <div class="rec-icon">🏆</div>
+        <div class="rec-title">Most Titles (Country)</div>
+        <div class="rec-val">Brazil — 5 Titles</div>
+        <div class="rec-desc">1958, 1962, 1970, 1994, 2002</div>
+        <span class="rec-highlight">22 appearances</span>
+      </div>
+      <div class="record-card">
+        <div class="rec-icon">💥</div>
+        <div class="rec-title">Biggest Win Ever</div>
+        <div class="rec-val">Germany 7–1 Brazil</div>
+        <div class="rec-desc">2014 Semi-Final · Mineirão</div>
+        <span class="rec-highlight">The Mineirazo</span>
+      </div>
+      <div class="record-card">
+        <div class="rec-icon">👶</div>
+        <div class="rec-title">Youngest Scorer in Final</div>
+        <div class="rec-val">Pelé — 17 years</div>
+        <div class="rec-desc">Brazil vs Sweden · 1958 Final</div>
+        <span class="rec-highlight">Hat-trick in semi-final</span>
+      </div>
+      <div class="record-card">
+        <div class="rec-icon">⚽</div>
+        <div class="rec-title">Most Goals in One Match</div>
+        <div class="rec-val">Oleg Salenko — 5</div>
+        <div class="rec-desc">Russia vs Cameroon · USA 1994</div>
+        <span class="rec-highlight">Still a record</span>
+      </div>
+      <div class="record-card">
+        <div class="rec-icon">🎯</div>
+        <div class="rec-title">Most Penalties Scored</div>
+        <div class="rec-val">Eusébio — 4</div>
+        <div class="rec-desc">Portugal · 1966 (9 goals total)</div>
+        <span class="rec-highlight">Ballon d'Or winner</span>
+      </div>
+      <div class="record-card">
+        <div class="rec-icon">📈</div>
+        <div class="rec-title">Highest Goals/Match (Tournament)</div>
+        <div class="rec-val">5.38 goals/match</div>
+        <div class="rec-desc">1954 Switzerland — 140 goals in 26 games</div>
+        <span class="rec-highlight">All-time record</span>
+      </div>
+      <div class="record-card">
+        <div class="rec-icon">🌟</div>
+        <div class="rec-title">Most World Cups Played</div>
+        <div class="rec-val">Lionel Messi — 5</div>
+        <div class="rec-desc">Argentina · 2006, 2010, 2014, 2018, 2022</div>
+        <span class="rec-highlight">Won 2022 🏆</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="api.js"></script>
+<script>
+let scorersData = [];
+let countriesData = [];
+
+async function init() {
+  // Load top scorers
+  const apiScorers = await API.topScorers(20);
+  if (apiScorers && apiScorers.length > 0) {
+    scorersData = apiScorers;
+  } else {
+    scorersData = [
+      {rank:1,name:'Miroslav Klose',flag:'🇩🇪',country:'Germany',goals:16,matches:24,tournaments:4,goals_per_match:0.67,era:'2002-2014'},
+      {rank:2,name:'Ronaldo Nazário',flag:'🇧🇷',country:'Brazil',goals:15,matches:19,tournaments:4,goals_per_match:0.79,era:'1994-2006'},
+      {rank:3,name:'Gerd Müller',flag:'🇩🇪',country:'West Germany',goals:14,matches:13,tournaments:2,goals_per_match:1.08,era:'1970-1974'},
+      {rank:4,name:'Just Fontaine',flag:'🇫🇷',country:'France',goals:13,matches:6,tournaments:1,goals_per_match:2.17,era:'1958'},
+      {rank:5,name:'Lionel Messi',flag:'🇦🇷',country:'Argentina',goals:13,matches:26,tournaments:5,goals_per_match:0.5,era:'2006-2022'},
+      {rank:6,name:'Pelé',flag:'🇧🇷',country:'Brazil',goals:12,matches:14,tournaments:4,goals_per_match:0.86,era:'1958-1970'},
+      {rank:7,name:'Kylian Mbappé',flag:'🇫🇷',country:'France',goals:12,matches:14,tournaments:2,goals_per_match:0.86,era:'2018-2022'},
+      {rank:8,name:'Sandor Kocsis',flag:'🇭🇺',country:'Hungary',goals:11,matches:5,tournaments:1,goals_per_match:2.2,era:'1954'},
+      {rank:9,name:'Jürgen Klinsmann',flag:'🇩🇪',country:'Germany',goals:11,matches:17,tournaments:3,goals_per_match:0.65,era:'1990-1998'},
+      {rank:10,name:'Helmut Rahn',flag:'🇩🇪',country:'West Germany',goals:10,matches:9,tournaments:2,goals_per_match:1.11,era:'1954-1958'},
+      {rank:11,name:'Gary Lineker',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',country:'England',goals:10,matches:12,tournaments:2,goals_per_match:0.83,era:'1986-1990'},
+      {rank:12,name:'Gabriel Batistuta',flag:'🇦🇷',country:'Argentina',goals:10,matches:12,tournaments:3,goals_per_match:0.83,era:'1994-2002'},
+    ];
+  }
+  buildPodium();
+  buildScorers();
+
+  // Load countries
+  const apiTeams = await API.countryPerf();
+  if (apiTeams && apiTeams.length > 0) {
+    countriesData = apiTeams;
+  } else {
+    countriesData = [
+      {flag:'🇧🇷',name:'Brazil',titles:5,appearances:22,goals_scored:229,wins:76,matches_played:114,win_rate:66.7},
+      {flag:'🇩🇪',name:'Germany',titles:4,appearances:20,goals_scored:226,wins:67,matches_played:109,win_rate:61.5},
+      {flag:'🇮🇹',name:'Italy',titles:4,appearances:18,goals_scored:128,wins:45,matches_played:83,win_rate:54.2},
+      {flag:'🇦🇷',name:'Argentina',titles:3,appearances:18,goals_scored:145,wins:45,matches_played:88,win_rate:51.1},
+      {flag:'🇫🇷',name:'France',titles:2,appearances:16,goals_scored:120,wins:39,matches_played:72,win_rate:54.2},
+      {flag:'🇺🇾',name:'Uruguay',titles:2,appearances:14,goals_scored:90,wins:27,matches_played:56,win_rate:48.2},
+      {flag:'🇪🇸',name:'Spain',titles:1,appearances:16,goals_scored:100,wins:33,matches_played:63,win_rate:52.4},
+      {flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',name:'England',titles:1,appearances:16,goals_scored:80,wins:29,matches_played:69,win_rate:42.0},
+      {flag:'🇳🇱',name:'Netherlands',titles:0,appearances:12,goals_scored:87,wins:25,matches_played:52,win_rate:48.1},
+      {flag:'🇵🇹',name:'Portugal',titles:0,appearances:9,goals_scored:51,wins:17,matches_played:37,win_rate:45.9},
+      {flag:'🇧🇪',name:'Belgium',titles:0,appearances:14,goals_scored:68,wins:21,matches_played:48,win_rate:43.8},
+      {flag:'🇭🇷',name:'Croatia',titles:0,appearances:8,goals_scored:44,wins:17,matches_played:34,win_rate:50.0},
+    ];
+  }
+  buildCountries();
+}
+
+function buildPodium() {
+  const p = scorersData;
+  if (p.length < 3) return;
+  const medals = ['🥈','🥇','🥉'];
+  const styles = ['silver','gold','bronze'];
+  const order = [p[1], p[0], p[2]]; // 2nd, 1st, 3rd
+  document.getElementById('podium').innerHTML = order.map((pl, i) => {
+    const gpm = pl.goals_per_match ?? (pl.goals/pl.matches).toFixed(2);
+    return `
+      <div class="podium-card ${styles[i]}">
+        <div class="pod-medal">${medals[i]}</div>
+        <div class="pod-name">${pl.name}</div>
+        <div class="pod-country">${pl.flag||''} ${pl.country}</div>
+        <div class="pod-goals">${pl.goals}</div>
+        <div class="pod-glbl">World Cup Goals</div>
+        <div class="pod-chips">
+          <div class="pod-chip"><div class="pod-chip-val">${pl.matches}</div><div class="pod-chip-lbl">Matches</div></div>
+          <div class="pod-chip"><div class="pod-chip-val">${pl.tournaments??'—'}</div><div class="pod-chip-lbl">Tournaments</div></div>
+          <div class="pod-chip"><div class="pod-chip-val">${gpm}</div><div class="pod-chip-lbl">Goals/Game</div></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function buildScorers() {
+  const max = scorersData[0]?.goals || 16;
+  document.getElementById('scorers-count').textContent = `Top ${scorersData.length}`;
+  document.getElementById('scorersList').innerHTML = scorersData.map((p, i) => {
+    const rank = p.rank || (i+1);
+    const gpm = p.goals_per_match ?? (p.goals/p.matches).toFixed(2);
+    const era = p.era || '—';
+    return `
+      <div class="scorer-row">
+        <span class="s-rank ${rank<=3?'top3':''}">${rank}</span>
+        <span class="s-flag">${p.flag||'🏳'}</span>
+        <div class="s-info"><div class="s-name">${p.name}</div><div class="s-meta">${p.country} · ${era}</div></div>
+        <div class="s-bar-wrap"><div class="s-bar-bg"><div class="s-bar-fill" data-w="${p.goals/max*100}" style="width:0%"></div></div></div>
+        <span class="s-goals">${p.goals}</span>
+        <span class="s-matches">${p.matches} apps</span>
+        <span class="s-gpm">${gpm}/g</span>
+      </div>`;
+  }).join('');
+  setTimeout(() => document.querySelectorAll('#tab-scorers .s-bar-fill').forEach(el => { el.style.width = el.dataset.w+'%'; }), 100);
+}
+
+function buildCountries() {
+  const maxWins = Math.max(...countriesData.map(c => c.wins||c.wins||0));
+  document.getElementById('countryGrid').innerHTML = countriesData.map((c, i) => `
+    <div class="country-card" style="animation-delay:${i*0.04}s">
+      <div class="cc-top">
+        <span class="cc-flag">${c.flag}</span>
+        <div><div class="cc-name">${c.name}</div><div class="cc-titles">${c.titles} World Cup Title${c.titles!==1?'s':''}</div></div>
+      </div>
+      <div class="cc-stat-row"><span class="cc-stat-label">Appearances</span><span class="cc-stat-val">${c.appearances}</span></div>
+      <div class="cc-stat-row"><span class="cc-stat-label">Goals Scored</span><span class="cc-stat-val">${c.goals_scored||c.goals}</span></div>
+      <div class="cc-stat-row"><span class="cc-stat-label">Wins</span><span class="cc-stat-val">${c.wins}</span></div>
+      <div class="cc-stat-row"><span class="cc-stat-label">Win Rate</span><span class="cc-stat-val">${c.win_rate}%</span></div>
+      <div class="cc-bar-bg"><div class="cc-bar-fill" data-w="${c.wins/maxWins*100}" style="width:0%"></div></div>
+    </div>`).join('');
+}
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'scorers') setTimeout(() => document.querySelectorAll('#tab-scorers .s-bar-fill').forEach(el => { el.style.width = el.dataset.w+'%'; }), 100);
+  if (id === 'countries') setTimeout(() => document.querySelectorAll('#tab-countries .cc-bar-fill').forEach(el => { el.style.width = el.dataset.w+'%'; }), 100);
+}
+
+init();
+</script>
+</body>
+</html>

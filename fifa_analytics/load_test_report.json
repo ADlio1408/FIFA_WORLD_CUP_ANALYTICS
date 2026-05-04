@@ -1,0 +1,107 @@
+{
+  "test_config": {
+    "users": 15,
+    "duration": 15
+  },
+  "summary": {
+    "total_requests": 11475,
+    "total_errors": 0,
+    "duration_s": 15.14,
+    "throughput_rps": 758.08,
+    "avg_latency_ms": 19.74,
+    "p95_latency_ms": 27.08,
+    "error_rate_pct": 0.0
+  },
+  "endpoints": {
+    "KPIs": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 16.93,
+      "p95_ms": 21.43
+    },
+    "KPIs filtered": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 17.46,
+      "p95_ms": 22.16
+    },
+    "Tournaments": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 18.7,
+      "p95_ms": 24.79
+    },
+    "Tournament detail": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 19.25,
+      "p95_ms": 25.13
+    },
+    "Matches": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 19.81,
+      "p95_ms": 25.03
+    },
+    "Matches filtered": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 19.84,
+      "p95_ms": 24.51
+    },
+    "Matches by team": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 20.58,
+      "p95_ms": 25.71
+    },
+    "Players": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 21.42,
+      "p95_ms": 26.87
+    },
+    "Top scorers": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 21.22,
+      "p95_ms": 26.64
+    },
+    "Teams": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 22.18,
+      "p95_ms": 29.13
+    },
+    "Team detail": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 24.2,
+      "p95_ms": 33.11
+    },
+    "Goals trend": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 20.69,
+      "p95_ms": 27.8
+    },
+    "Stage breakdown": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 19.41,
+      "p95_ms": 28.58
+    },
+    "Winners": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 17.27,
+      "p95_ms": 21.89
+    },
+    "Search": {
+      "requests": 765,
+      "errors": 0,
+      "avg_ms": 17.13,
+      "p95_ms": 21.82
+    }
+  }
+}

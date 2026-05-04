@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FIFA Analytics — Match Explorer</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="dashboard.css"/>
+  <style>
+    .filters-bar{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap;align-items:center;}
+    .filter-select,.filter-input{padding:9px 14px;font-family:'DM Sans',sans-serif;font-size:13px;border:1.5px solid var(--border);border-radius:var(--radius);background:white;color:var(--text);outline:none;cursor:pointer;transition:border-color .2s;}
+    .filter-select:focus,.filter-input:focus{border-color:var(--green-mid);}
+    .filter-input{min-width:220px;}
+    .results-count{margin-left:auto;font-size:13px;color:var(--text-muted);align-self:center;}
+    .btn-reset{padding:9px 16px;background:var(--green-light);color:var(--green-mid);border:1.5px solid #b2d8bf;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;}
+    .btn-reset:hover{background:#d0ecda;}
+
+    .stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+    .stat-box{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;display:flex;align-items:center;gap:14px;}
+    .stat-icon{font-size:22px;}
+    .stat-val{font-size:22px;font-weight:700;line-height:1;}
+    .stat-lbl{font-size:11.5px;color:var(--text-muted);margin-top:3px;}
+
+    .matches-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;}
+    .match-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;transition:box-shadow .2s,transform .2s;cursor:pointer;animation:cardIn .3s ease both;}
+    @keyframes cardIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    .match-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.09);transform:translateY(-2px);}
+    .match-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .match-year-badge{font-size:11px;background:var(--green-light);color:var(--green-mid);padding:3px 10px;border-radius:20px;font-weight:600;}
+    .stage-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500;}
+    .stage-Final{background:var(--gold-light);color:var(--gold);}
+    .stage-Semi-Final{background:#e8f0fe;color:#1a73e8;}
+    .stage-Quarter-Final{background:#fde8e8;color:#c0392b;}
+    .stage-default{background:var(--green-light);color:var(--green-mid);}
+    .match-teams{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .team-side{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;}
+    .team-flag{font-size:30px;}
+    .team-name{font-size:12px;font-weight:600;text-align:center;}
+    .match-score-box{text-align:center;}
+    .match-score{font-size:26px;font-weight:700;color:var(--text);line-height:1;}
+    .match-pen{font-size:10px;color:var(--text-muted);margin-top:2px;}
+    .match-footer{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+    .match-venue{font-size:11.5px;color:var(--text-muted);}
+    .winner-chip{font-size:11px;background:var(--gold-light);color:var(--gold);padding:3px 10px;border-radius:20px;font-weight:600;}
+    .draw-chip{font-size:11px;background:var(--green-light);color:var(--green-mid);padding:3px 10px;border-radius:20px;font-weight:600;}
+    .no-results{text-align:center;padding:60px 20px;color:var(--text-muted);grid-column:1/-1;}
+    .no-results .emoji{font-size:40px;display:block;margin-bottom:12px;}
+
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease;}
+    .modal-overlay.hidden{display:none;}
+    .modal{background:white;border-radius:16px;padding:32px;width:500px;max-width:95vw;position:relative;animation:slideUp .3s ease;}
+    @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .modal-close{position:absolute;top:14px;right:14px;background:var(--bg);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+    .modal-top-badge{font-size:12px;background:var(--green-light);color:var(--green-mid);padding:4px 12px;border-radius:20px;font-weight:600;display:inline-block;margin-bottom:18px;}
+    .modal-teams-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+    .modal-team{text-align:center;}
+    .modal-flag{font-size:50px;}
+    .modal-tname{font-size:14px;font-weight:600;margin-top:6px;}
+    .modal-score-big{font-size:50px;font-weight:700;color:var(--green-mid);line-height:1;text-align:center;}
+    .modal-pen{font-size:13px;color:var(--text-muted);text-align:center;margin-top:2px;}
+    .modal-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .modal-info-box{background:var(--bg);border-radius:8px;padding:10px 14px;}
+    .modal-info-lbl{font-size:11px;color:var(--text-muted);}
+    .modal-info-val{font-size:13px;font-weight:600;margin-top:2px;}
+    .source-badge{font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;}
+    .src-api{background:#e8f5ee;color:#0d3d20;}
+    .src-local{background:#fdf5dc;color:#8b6000;}
+  </style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-ball">⚽</span>
+    <div><span class="logo-title">FIFA Analytics</span><span class="logo-sub">SE Project</span></div>
+  </div>
+  <nav class="nav">
+    <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+    <a href="matches.html" class="nav-item active"><span class="nav-icon">⚽</span> Matches</a>
+    <a href="players.html" class="nav-item"><span class="nav-icon">👤</span> Players</a>
+    <a href="timeline.html" class="nav-item"><span class="nav-icon">📈</span> Timeline</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="avatar">MU</div>
+      <div><span class="user-name">Mahindra Univ</span><span class="user-role">Demo Mode</span></div>
+    </div>
+    <a href="login.html" class="logout-btn">← Logout</a>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div>
+      <h1 class="page-title">Match Explorer</h1>
+      <p class="page-sub">Browse, search & filter all FIFA World Cup matches · Click any card for details
+        <span id="data-source" class="source-badge src-local">📦 Local data</span>
+      </p>
+    </div>
+  </header>
+
+  <div class="stats-strip">
+    <div class="stat-box"><span class="stat-icon">📋</span><div><div class="stat-val" id="s-total">0</div><div class="stat-lbl">Matches Shown</div></div></div>
+    <div class="stat-box"><span class="stat-icon">⚽</span><div><div class="stat-val" id="s-goals">0</div><div class="stat-lbl">Total Goals</div></div></div>
+    <div class="stat-box"><span class="stat-icon">🏆</span><div><div class="stat-val" id="s-finals">0</div><div class="stat-lbl">Finals</div></div></div>
+    <div class="stat-box"><span class="stat-icon">📐</span><div><div class="stat-val" id="s-avg">0.0</div><div class="stat-lbl">Avg Goals/Match</div></div></div>
+  </div>
+
+  <div class="filters-bar">
+    <input class="filter-input" id="searchInput" type="text" placeholder="🔍  Search team…" oninput="applyFilters()"/>
+    <select class="filter-select" id="yearFilter" onchange="applyFilters()">
+      <option value="">All Years</option>
+    </select>
+    <select class="filter-select" id="stageFilter" onchange="applyFilters()">
+      <option value="">All Stages</option>
+      <option>Final</option><option>Semi-Final</option><option>Quarter-Final</option>
+      <option>Round of 16</option><option>Group Stage</option>
+    </select>
+    <button class="btn-reset" onclick="resetFilters()">↺ Reset</button>
+    <span class="results-count" id="resultsCount"></span>
+  </div>
+
+  <div class="matches-grid" id="matchGrid"><div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">Loading matches…</div></div>
+</main>
+
+<div class="modal-overlay hidden" id="modalOverlay" onclick="closeModalOut(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('modalOverlay').classList.add('hidden')">✕</button>
+    <span class="modal-top-badge" id="m-badge"></span>
+    <div class="modal-teams-row">
+      <div class="modal-team"><div class="modal-flag" id="m-f1"></div><div class="modal-tname" id="m-t1"></div></div>
+      <div><div class="modal-score-big" id="m-score"></div><div class="modal-pen" id="m-pen"></div></div>
+      <div class="modal-team"><div class="modal-flag" id="m-f2"></div><div class="modal-tname" id="m-t2"></div></div>
+    </div>
+    <div class="modal-info-grid" id="m-info"></div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+// Flag map for DB data (team name → flag emoji)
+const FLAGS = {
+  'Argentina':'🇦🇷','France':'🇫🇷','Croatia':'🇭🇷','Morocco':'🇲🇦','Portugal':'🇵🇹',
+  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Netherlands':'🇳🇱','Brazil':'🇧🇷','Germany':'🇩🇪','Spain':'🇪🇸',
+  'Italy':'🇮🇹','Belgium':'🇧🇪','Uruguay':'🇺🇾','Mexico':'🇲🇽','Russia':'🇷🇺',
+  'Japan':'🇯🇵','South Korea':'🇰🇷','USA':'🇺🇸','Saudi Arabia':'🇸🇦','Australia':'🇦🇺',
+  'Poland':'🇵🇱','Ghana':'🇬🇭','Colombia':'🇨🇴','Chile':'🇨🇱','Ecuador':'🇪🇨',
+  'Sweden':'🇸🇪','Hungary':'🇭🇺','West Germany':'🇩🇪','Costa Rica':'🇨🇷','Senegal':'🇸🇳',
+};
+
+const STATIC_DATA = [
+  {year:2022,stage:'Final',team1:'Argentina',team2:'France',score1:3,score2:3,extra:'4-2 pens',venue:'Lusail Stadium, Qatar',attendance:88966,winner:'Argentina'},
+  {year:2022,stage:'Semi-Final',team1:'Argentina',team2:'Croatia',score1:3,score2:0,venue:'Lusail Stadium, Qatar',attendance:88966,winner:'Argentina'},
+  {year:2022,stage:'Semi-Final',team1:'France',team2:'Morocco',score1:2,score2:0,venue:'Al Bayt, Qatar',attendance:68294,winner:'France'},
+  {year:2022,stage:'Quarter-Final',team1:'Morocco',team2:'Portugal',score1:1,score2:0,venue:'Al Thumama, Qatar',attendance:44137,winner:'Morocco'},
+  {year:2022,stage:'Quarter-Final',team1:'France',team2:'England',score1:2,score2:1,venue:'Al Bayt, Qatar',attendance:68295,winner:'France'},
+  {year:2022,stage:'Round of 16',team1:'France',team2:'Poland',score1:3,score2:1,venue:'Al Thumama, Qatar',attendance:41721,winner:'France'},
+  {year:2022,stage:'Round of 16',team1:'Argentina',team2:'Australia',score1:2,score2:1,venue:'Ahmad bin Ali, Qatar',attendance:45416,winner:'Argentina'},
+  {year:2022,stage:'Group Stage',team1:'Argentina',team2:'Saudi Arabia',score1:1,score2:2,venue:'Lusail, Qatar',attendance:88012,winner:'Saudi Arabia'},
+  {year:2022,stage:'Group Stage',team1:'Germany',team2:'Japan',score1:1,score2:2,venue:'Khalifa International',attendance:42608,winner:'Japan'},
+  {year:2018,stage:'Final',team1:'France',team2:'Croatia',score1:4,score2:2,venue:'Luzhniki, Moscow',attendance:78011,winner:'France'},
+  {year:2018,stage:'Semi-Final',team1:'France',team2:'Belgium',score1:1,score2:0,venue:'Saint Petersburg',attendance:64286,winner:'France'},
+  {year:2018,stage:'Semi-Final',team1:'Croatia',team2:'England',score1:2,score2:1,extra:'AET',venue:'Luzhniki, Moscow',attendance:78011,winner:'Croatia'},
+  {year:2018,stage:'Quarter-Final',team1:'France',team2:'Uruguay',score1:2,score2:0,venue:'Nizhny Novgorod',attendance:43319,winner:'France'},
+  {year:2018,stage:'Quarter-Final',team1:'Belgium',team2:'Brazil',score1:2,score2:1,venue:'Kazan Arena',attendance:42844,winner:'Belgium'},
+  {year:2018,stage:'Round of 16',team1:'Spain',team2:'Russia',score1:1,score2:1,extra:'3-4 pens',venue:'Luzhniki, Moscow',attendance:78011,winner:'Russia'},
+  {year:2018,stage:'Group Stage',team1:'Germany',team2:'South Korea',score1:0,score2:2,venue:'Kazan Arena',attendance:42873,winner:'South Korea'},
+  {year:2014,stage:'Final',team1:'Germany',team2:'Argentina',score1:1,score2:0,extra:'AET',venue:'Maracanã, Rio',attendance:74738,winner:'Germany'},
+  {year:2014,stage:'Semi-Final',team1:'Brazil',team2:'Germany',score1:1,score2:7,venue:'Mineirão, BH',attendance:58141,winner:'Germany'},
+  {year:2014,stage:'Semi-Final',team1:'Argentina',team2:'Netherlands',score1:0,score2:0,extra:'4-2 pens',venue:'Arena de SP',attendance:63267,winner:'Argentina'},
+  {year:2014,stage:'Quarter-Final',team1:'Germany',team2:'France',score1:1,score2:0,venue:'Maracanã, Rio',attendance:74240,winner:'Germany'},
+  {year:2014,stage:'Group Stage',team1:'Germany',team2:'Ghana',score1:2,score2:2,venue:'Fortaleza',attendance:60342,winner:'Draw'},
+  {year:2010,stage:'Final',team1:'Spain',team2:'Netherlands',score1:1,score2:0,extra:'AET',venue:'Soccer City, Joburg',attendance:84490,winner:'Spain'},
+  {year:2010,stage:'Semi-Final',team1:'Spain',team2:'Germany',score1:1,score2:0,venue:'Moses Mabhida, Durban',attendance:60960,winner:'Spain'},
+  {year:2010,stage:'Quarter-Final',team1:'Ghana',team2:'Uruguay',score1:1,score2:1,extra:'2-4 pens',venue:'Soccer City, Joburg',attendance:84017,winner:'Uruguay'},
+  {year:2006,stage:'Final',team1:'Italy',team2:'France',score1:1,score2:1,extra:'5-3 pens',venue:'Olympiastadion, Berlin',attendance:69000,winner:'Italy'},
+  {year:2006,stage:'Semi-Final',team1:'Germany',team2:'Italy',score1:0,score2:2,extra:'AET',venue:'Westfalenstadion',attendance:65000,winner:'Italy'},
+  {year:2006,stage:'Quarter-Final',team1:'England',team2:'Portugal',score1:0,score2:0,extra:'1-3 pens',venue:'Gelsenkirchen',attendance:52000,winner:'Portugal'},
+];
+
+let ALL_DATA = [];
+let filtered = [];
+
+async function init() {
+  // Try API first
+  const apiData = await API.matches('?limit=200&order_by=year&order=desc');
+  if (apiData && apiData.data && apiData.data.length > 0) {
+    ALL_DATA = apiData.data;
+    document.getElementById('data-source').textContent = '🟢 Live API data';
+    document.getElementById('data-source').className = 'source-badge src-api';
+  } else {
+    ALL_DATA = STATIC_DATA;
+  }
+
+  // Populate year filter
+  const years = [...new Set(ALL_DATA.map(m => m.year))].sort((a,b) => b-a);
+  const yf = document.getElementById('yearFilter');
+  years.forEach(y => { const o = document.createElement('option'); o.value = y; o.textContent = y; yf.appendChild(o); });
+
+  applyFilters();
+}
+
+function getFlag(name) { return FLAGS[name] || '🏳'; }
+
+function applyFilters() {
+  const s = document.getElementById('searchInput').value.toLowerCase();
+  const y = document.getElementById('yearFilter').value;
+  const st = document.getElementById('stageFilter').value;
+  filtered = ALL_DATA.filter(m => {
+    const t1 = (m.team1 || m.t1 || '').toLowerCase();
+    const t2 = (m.team2 || m.t2 || '').toLowerCase();
+    return (!s || t1.includes(s) || t2.includes(s))
+        && (!y || String(m.year) === y)
+        && (!st || m.stage === st);
+  });
+  render();
+}
+
+function resetFilters() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('yearFilter').value = '';
+  document.getElementById('stageFilter').value = '';
+  applyFilters();
+}
+
+function stageClass(s) {
+  if (s === 'Final') return 'stage-Final';
+  if (s === 'Semi-Final') return 'stage-Semi-Final';
+  if (s === 'Quarter-Final') return 'stage-Quarter-Final';
+  return 'stage-default';
+}
+
+function render() {
+  const totalGoals = filtered.reduce((a,m) => a + (m.score1??m.s1??0) + (m.score2??m.s2??0), 0);
+  document.getElementById('s-total').textContent = filtered.length;
+  document.getElementById('s-goals').textContent = totalGoals;
+  document.getElementById('s-finals').textContent = filtered.filter(m => m.stage === 'Final').length;
+  document.getElementById('s-avg').textContent = filtered.length ? (totalGoals/filtered.length).toFixed(1) : '0.0';
+  document.getElementById('resultsCount').textContent = `${filtered.length} match${filtered.length !== 1 ? 'es' : ''} found`;
+
+  const grid = document.getElementById('matchGrid');
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="no-results"><span class="emoji">🔍</span>No matches found. Try adjusting the filters.</div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map((m, i) => {
+    const t1 = m.team1 || m.t1; const t2 = m.team2 || m.t2;
+    const s1 = m.score1 ?? m.s1 ?? 0; const s2 = m.score2 ?? m.s2 ?? 0;
+    const f1 = m.f1 || getFlag(t1); const f2 = m.f2 || getFlag(t2);
+    const pen = m.extra || m.pen || '';
+    const winner = m.winner || '';
+    return `
+      <div class="match-card" style="animation-delay:${i*0.02}s" onclick="openModal(${i})">
+        <div class="match-meta">
+          <span class="match-year-badge">${m.year}</span>
+          <span class="stage-badge ${stageClass(m.stage)}">${m.stage}</span>
+        </div>
+        <div class="match-teams">
+          <div class="team-side"><div class="team-flag">${f1}</div><div class="team-name">${t1}</div></div>
+          <div class="match-score-box">
+            <div class="match-score">${s1} – ${s2}</div>
+            ${pen ? `<div class="match-pen">${pen}</div>` : ''}
+          </div>
+          <div class="team-side"><div class="team-flag">${f2}</div><div class="team-name">${t2}</div></div>
+        </div>
+        <div class="match-footer">
+          <span class="match-venue">📍 ${m.venue || 'N/A'}</span>
+          ${winner === 'Draw' ? `<span class="draw-chip">🤝 Draw</span>` : `<span class="winner-chip">🏆 ${winner}</span>`}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openModal(idx) {
+  const m = filtered[idx];
+  const t1 = m.team1||m.t1; const t2 = m.team2||m.t2;
+  const s1 = m.score1??m.s1??0; const s2 = m.score2??m.s2??0;
+  document.getElementById('m-badge').textContent = `${m.year} · ${m.stage}`;
+  document.getElementById('m-f1').textContent = m.f1 || getFlag(t1);
+  document.getElementById('m-t1').textContent = t1;
+  document.getElementById('m-f2').textContent = m.f2 || getFlag(t2);
+  document.getElementById('m-t2').textContent = t2;
+  document.getElementById('m-score').textContent = `${s1} – ${s2}`;
+  document.getElementById('m-pen').textContent = m.extra||m.pen||'';
+  document.getElementById('m-info').innerHTML = `
+    <div class="modal-info-box"><div class="modal-info-lbl">📍 Venue</div><div class="modal-info-val">${m.venue||'N/A'}</div></div>
+    <div class="modal-info-box"><div class="modal-info-lbl">👥 Attendance</div><div class="modal-info-val">${m.attendance ? m.attendance.toLocaleString() : 'N/A'}</div></div>
+    <div class="modal-info-box"><div class="modal-info-lbl">⚽ Total Goals</div><div class="modal-info-val">${s1+s2}</div></div>
+    <div class="modal-info-box"><div class="modal-info-lbl">🏆 Winner</div><div class="modal-info-val">${m.winner||'N/A'}</div></div>`;
+  document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+function closeModalOut(e) {
+  if (e.target.id === 'modalOverlay') document.getElementById('modalOverlay').classList.add('hidden');
+}
+
+init();
+</script>
+</body>
+</html>

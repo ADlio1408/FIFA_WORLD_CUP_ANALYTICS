@@ -1,0 +1,143 @@
+{
+  "checks": [
+    {
+      "check": "Total tournaments present",
+      "value": 22,
+      "passed": true
+    },
+    {
+      "check": "Total matches present",
+      "value": 67,
+      "passed": true
+    },
+    {
+      "check": "Total players present",
+      "value": 30,
+      "passed": true
+    },
+    {
+      "check": "Total teams present",
+      "value": 20,
+      "passed": true
+    },
+    {
+      "check": "Tournaments cover 1930-2022",
+      "value": 92,
+      "passed": true
+    },
+    {
+      "check": "No NULL tournament years",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "check": "No NULL tournament winners",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "check": "No NULL match teams",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "check": "No negative scores",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "check": "No NULL player names",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "check": "No NULL player goals",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "check": "Goals per tournament > 0",
+      "value": 70,
+      "passed": true
+    },
+    {
+      "check": "Goals per tournament < 250",
+      "value": 172,
+      "passed": true
+    },
+    {
+      "check": "Matches per tournament > 10",
+      "value": 17,
+      "passed": true
+    },
+    {
+      "check": "All-time top scorer >= 14 goals",
+      "value": 16,
+      "passed": true
+    },
+    {
+      "check": "Attendance values positive",
+      "value": 38000,
+      "passed": true
+    },
+    {
+      "check": "Teams have appearances",
+      "value": 8,
+      "passed": true
+    },
+    {
+      "check": "No orphan match years",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "check": "Stage values valid",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "check": "goals_per_match computed correctly",
+      "value": 1,
+      "passed": true
+    },
+    {
+      "check": "total_goals computed in matches",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "check": "goals_per_match in players correct",
+      "value": 0,
+      "passed": true
+    },
+    {
+      "check": "Brazil has 5 titles (teams table)",
+      "value": 5,
+      "passed": true
+    },
+    {
+      "check": "Germany has 4 titles (teams table)",
+      "value": 4,
+      "passed": true
+    },
+    {
+      "check": "Klose is all-time top scorer",
+      "value": "Miroslav Klose",
+      "passed": true
+    },
+    {
+      "check": "2022 Qatar final recorded",
+      "value": 1,
+      "passed": true
+    },
+    {
+      "check": "KPI cache populated",
+      "value": 8,
+      "passed": true
+    }
+  ],
+  "passed": 27,
+  "failed": 0,
+  "quality_score_pct": 100.0,
+  "grade": "EXCELLENT"
+}

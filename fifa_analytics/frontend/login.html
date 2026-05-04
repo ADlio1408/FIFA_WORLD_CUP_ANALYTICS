@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FIFA Analytics Platform — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="login.css"/>
+</head>
+<body>
+  <div class="page">
+    <!-- LEFT BRANDING PANEL -->
+    <div class="branding">
+      <div class="brand-top">
+        <div class="logo">
+          <span class="logo-ball">⚽</span>
+          <div>
+            <span class="logo-title">FIFA Analytics</span>
+            <span class="logo-sub">Data & Visualization Platform</span>
+          </div>
+        </div>
+      </div>
+      <div class="brand-body">
+        <h1 class="brand-heading">Explore the<br/>Beautiful Game<br/><em>with Data.</em></h1>
+        <p class="brand-desc">Historical World Cup stats, team performance trends, and interactive dashboards — all in one place.</p>
+        <div class="stat-chips">
+          <div class="chip"><span class="chip-num">22</span><span class="chip-label">Tournaments</span></div>
+          <div class="chip"><span class="chip-num">900+</span><span class="chip-label">Matches</span></div>
+          <div class="chip"><span class="chip-num">80+</span><span class="chip-label">Nations</span></div>
+        </div>
+      </div>
+      <div class="brand-footer">Mahindra University &nbsp;·&nbsp; Software Engineering Project 2026</div>
+    </div>
+
+    <!-- RIGHT LOGIN FORM -->
+    <div class="form-panel">
+      <div class="form-card">
+        <div class="form-header">
+          <h2>Welcome back</h2>
+          <p>Sign in to access your dashboard</p>
+        </div>
+
+        <div id="api-status" style="font-size:12px;padding:6px 10px;border-radius:6px;margin-bottom:16px;display:none;"></div>
+
+        <form onsubmit="handleLogin(event)">
+          <div class="field">
+            <label for="email">Email address</label>
+            <input type="email" id="email" placeholder="yourname@mahindrauniversity.edu.in" autocomplete="email" required/>
+          </div>
+          <div class="field">
+            <div class="label-row">
+              <label for="password">Password</label>
+              <a href="#" class="forgot-link">Forgot password?</a>
+            </div>
+            <div class="input-wrap">
+              <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required/>
+              <button type="button" class="eye-btn" onclick="togglePassword()"><span id="eye-icon">👁</span></button>
+            </div>
+          </div>
+          <div class="remember-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="remember"/>
+              <span>Remember me</span>
+            </label>
+          </div>
+          <button type="submit" class="btn-login"><span id="btn-text">Sign In</span></button>
+        </form>
+
+        <div class="divider"><span>or</span></div>
+        <button class="btn-demo" onclick="demoLogin()">Continue as Guest (Demo Mode)</button>
+        <p class="signup-note">New user? <a href="#">Request access</a></p>
+        <div id="toast" class="toast hidden">Redirecting to dashboard…</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Check API connectivity on load
+    async function checkAPI() {
+      const el = document.getElementById('api-status');
+      try {
+        const r = await fetch('http://localhost:8000/', { signal: AbortSignal.timeout(2000) });
+        if (r.ok) {
+          el.style.display = 'block';
+          el.style.background = '#e8f5ee';
+          el.style.color = '#0d3d20';
+          el.textContent = '✅ Backend API connected — http://localhost:8000';
+        }
+      } catch {
+        el.style.display = 'block';
+        el.style.background = '#fdf5dc';
+        el.style.color = '#8b6000';
+        el.textContent = '⚠️ Running in offline/demo mode (start backend for live data)';
+      }
+    }
+    checkAPI();
+
+    function togglePassword() {
+      const input = document.getElementById('password');
+      const icon = document.getElementById('eye-icon');
+      input.type = input.type === 'password' ? 'text' : 'password';
+      icon.textContent = input.type === 'password' ? '👁' : '🙈';
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-text');
+      btn.textContent = 'Signing in…';
+      setTimeout(() => { showToast(); setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200); }, 800);
+    }
+
+    function demoLogin() {
+      showToast();
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200);
+    }
+
+    function showToast() {
+      const t = document.getElementById('toast');
+      t.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>

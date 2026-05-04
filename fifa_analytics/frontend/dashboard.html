@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FIFA Analytics — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="dashboard.css"/>
+  <style>
+    .api-badge { font-size:11px; padding:3px 10px; border-radius:20px; font-weight:600; }
+    .api-online  { background:#e8f5ee; color:#0d3d20; }
+    .api-offline { background:#fdf5dc; color:#8b6000; }
+    .loading-pulse { animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .kpi-val.loading { font-size:14px; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-ball">⚽</span>
+      <div><span class="logo-title">FIFA Analytics</span><span class="logo-sub">SE Project</span></div>
+    </div>
+    <nav class="nav">
+      <a href="dashboard.html" class="nav-item active"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="matches.html"   class="nav-item"><span class="nav-icon">⚽</span> Matches</a>
+      <a href="players.html"   class="nav-item"><span class="nav-icon">👤</span> Players</a>
+      <a href="timeline.html"  class="nav-item"><span class="nav-icon">📈</span> Timeline</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar">MU</div>
+        <div><span class="user-name">Mahindra Univ</span><span class="user-role">Demo Mode</span></div>
+      </div>
+      <a href="login.html" class="logout-btn">← Logout</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-sub">FIFA World Cup · Historical Overview</p>
+      </div>
+      <div class="topbar-right" style="display:flex;align-items:center;gap:12px;">
+        <span id="api-status" class="api-badge api-offline">⚪ Checking API…</span>
+        <select class="year-filter" id="yearFilter" onchange="loadDashboard()">
+          <option value="">All Years</option>
+          <option>2022</option><option>2018</option><option>2014</option>
+          <option>2010</option><option>2006</option><option>2002</option>
+          <option>1998</option><option>1994</option><option>1990</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- KPI CARDS -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon green">🏆</div>
+        <div><div class="kpi-val loading-pulse" id="kpi-tournaments">…</div><div class="kpi-lbl">Tournaments</div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon gold">⚽</div>
+        <div><div class="kpi-val loading-pulse" id="kpi-goals">…</div><div class="kpi-lbl">Total Goals</div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon blue">📋</div>
+        <div><div class="kpi-val loading-pulse" id="kpi-matches">…</div><div class="kpi-lbl">Matches Played</div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon red">🌍</div>
+        <div><div class="kpi-val loading-pulse" id="kpi-nations">…</div><div class="kpi-lbl">Nations Competed</div></div>
+      </div>
+    </section>
+
+    <!-- CHARTS ROW -->
+    <section class="charts-row">
+      <div class="chart-card wide">
+        <div class="chart-header">
+          <h3>Goals per Tournament</h3>
+          <span class="badge" id="trend-range">Loading…</span>
+        </div>
+        <div class="bar-chart">
+          <div class="bars" id="goalsChart"></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>Most Titles</h3>
+          <span class="badge">All-time</span>
+        </div>
+        <ul class="leaderboard" id="leaderboard"></ul>
+      </div>
+    </section>
+
+    <!-- RECENT FINALS -->
+    <section class="table-card">
+      <div class="chart-header">
+        <h3>Recent Finals</h3>
+        <span class="badge">Last 5 editions</span>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Year</th><th>Host</th><th>Winner</th><th>Runner-up</th><th>Score</th><th>Goals/Match</th></tr>
+        </thead>
+        <tbody id="finalsTable"><tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Loading…</td></tr></tbody>
+      </table>
+    </section>
+
+    <!-- ANALYTICS CARDS -->
+    <section class="charts-row" style="margin-bottom:24px;">
+      <div class="chart-card" style="flex:1">
+        <div class="chart-header"><h3>Stage Analysis</h3><span class="badge">Goals by Round</span></div>
+        <div id="stageChart" style="margin-top:12px;"></div>
+      </div>
+      <div class="chart-card" style="flex:1">
+        <div class="chart-header"><h3>Top Scorer</h3><span class="badge">All Time</span></div>
+        <div id="topScorer" style="margin-top:12px;"></div>
+      </div>
+    </section>
+
+    <footer class="page-footer">
+      FIFA World Cup Analytics Platform &nbsp;·&nbsp; Mahindra University &nbsp;·&nbsp; Team of 7 &nbsp;·&nbsp; SE Course 2026
+      &nbsp;·&nbsp; <a href="http://localhost:8000/docs" target="_blank" style="color:var(--green-mid);">API Docs ↗</a>
+    </footer>
+  </main>
+
+  <script src="api.js"></script>
+  <script>
+    // ── Static fallback data ──────────────────────────────────────────────────
+    const FALLBACK_TREND = [
+      {year:1930,goals:70,matches:18},{year:1950,goals:88,matches:22},
+      {year:1954,goals:140,matches:26},{year:1958,goals:126,matches:35},
+      {year:1962,goals:89,matches:32},{year:1966,goals:89,matches:32},
+      {year:1970,goals:95,matches:32},{year:1974,goals:97,matches:38},
+      {year:1978,goals:102,matches:38},{year:1982,goals:146,matches:52},
+      {year:1986,goals:132,matches:52},{year:1990,goals:115,matches:52},
+      {year:1994,goals:141,matches:52},{year:1998,goals:171,matches:64},
+      {year:2002,goals:161,matches:64},{year:2006,goals:147,matches:64},
+      {year:2010,goals:145,matches:64},{year:2014,goals:171,matches:64},
+      {year:2018,goals:169,matches:64},{year:2022,goals:172,matches:64},
+    ];
+    const FALLBACK_WINNERS = [
+      {country:'🇧🇷 Brazil',titles:5},{country:'🇩🇪 Germany',titles:4},
+      {country:'🇮🇹 Italy',titles:4},{country:'🇦🇷 Argentina',titles:3},
+      {country:'🇫🇷 France',titles:2},{country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 England',titles:1},
+    ];
+    const FALLBACK_FINALS = [
+      {year:2022,host:'Qatar',winner:'🇦🇷 Argentina',runnerup:'🇫🇷 France',score:'3–3 (4-2 pens)',gpm:2.7},
+      {year:2018,host:'Russia',winner:'🇫🇷 France',runnerup:'🇭🇷 Croatia',score:'4–2',gpm:2.6},
+      {year:2014,host:'Brazil',winner:'🇩🇪 Germany',runnerup:'🇦🇷 Argentina',score:'1–0 AET',gpm:2.7},
+      {year:2010,host:'South Africa',winner:'🇪🇸 Spain',runnerup:'🇳🇱 Netherlands',score:'1–0 AET',gpm:2.3},
+      {year:2006,host:'Germany',winner:'🇮🇹 Italy',runnerup:'🇫🇷 France',score:'1–1 (5-3 pens)',gpm:2.3},
+    ];
+
+    async function loadDashboard() {
+      const year = document.getElementById('yearFilter').value || null;
+
+      // KPIs
+      const kpis = await API.kpis(year);
+      if (kpis) {
+        document.getElementById('kpi-tournaments').textContent = kpis.tournaments ?? kpis.teams ?? '22';
+        document.getElementById('kpi-goals').textContent = (kpis.total_goals ?? kpis.goals ?? 2548).toLocaleString();
+        document.getElementById('kpi-matches').textContent = (kpis.total_matches ?? kpis.matches ?? 964).toLocaleString();
+        document.getElementById('kpi-nations').textContent = kpis.nations ?? kpis.teams ?? 83;
+      }
+
+      // Goals trend
+      const trend = await API.goalsTrend() ?? FALLBACK_TREND;
+      renderGoalsChart(trend);
+
+      // Winners leaderboard
+      const winners = await API.winners() ?? FALLBACK_WINNERS;
+      renderLeaderboard(winners);
+
+      // Finals table
+      const tourData = await API.tournaments('?limit=5&order=desc') ?? { data: FALLBACK_FINALS };
+      renderFinalsTable(tourData.data ?? FALLBACK_FINALS);
+
+      // Stage breakdown
+      const stages = await API.stageBreakdown(year);
+      renderStageChart(stages);
+
+      // Top scorer
+      const scorers = await API.topScorers(1);
+      renderTopScorer(scorers);
+    }
+
+    function renderGoalsChart(data) {
+      const arr = Array.isArray(data) ? data : (data.data || FALLBACK_TREND);
+      const maxGoals = Math.max(...arr.map(t => t.goals));
+      document.getElementById('trend-range').textContent =
+        `${arr[0]?.year}–${arr[arr.length-1]?.year}`;
+      document.getElementById('goalsChart').innerHTML = arr.map(t => `
+        <div class="bar-group">
+          <div class="bar${t.goals===maxGoals?' highlight':''}" style="height:${Math.round(t.goals/maxGoals*100)}%"
+               title="${t.year}: ${t.goals} goals"></div>
+          <span>${t.year}</span>
+        </div>`).join('');
+    }
+
+    function renderLeaderboard(data) {
+      const arr = Array.isArray(data) ? data : FALLBACK_WINNERS;
+      const medals = ['gold-rank','','','','',''];
+      document.getElementById('leaderboard').innerHTML = arr.slice(0,6).map((w,i) => {
+        const flag = w.flag || '';
+        const name = w.country || (flag + ' ' + w.name) || 'Unknown';
+        const titles = w.titles;
+        return `<li>
+          <span class="rank ${medals[i]||''}">${i+1}</span>
+          <span class="country">${name}</span>
+          <span class="titles">${titles}</span>
+        </li>`;
+      }).join('');
+    }
+
+    function renderFinalsTable(data) {
+      const arr = Array.isArray(data) ? data.filter(t => t.year && t.winner) : FALLBACK_FINALS;
+      const rows = arr.slice(0,5);
+      document.getElementById('finalsTable').innerHTML = rows.map(t => {
+        const score = t.score || `${t.goals} goals`;
+        const gpm = t.goals_per_match ?? t.gpm ?? '—';
+        return `<tr>
+          <td><strong>${t.year}</strong></td>
+          <td>${t.host}</td>
+          <td>${t.winner}</td>
+          <td>${t.runnerup || '—'}</td>
+          <td><span class="score-badge">${score}</span></td>
+          <td>${gpm}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderStageChart(data) {
+      if (!data || !data.length) {
+        document.getElementById('stageChart').innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Connect API for stage data</p>';
+        return;
+      }
+      document.getElementById('stageChart').innerHTML = data.map(s => `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span style="font-size:12px;width:110px;color:var(--text-muted);">${s.stage}</span>
+          <div style="flex:1;height:10px;background:var(--bg);border-radius:5px;overflow:hidden;">
+            <div style="height:100%;width:${Math.round(s.avg_goals/5*100)}%;background:var(--green-mid);border-radius:5px;"></div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:var(--green-mid);width:30px;">${s.avg_goals}</span>
+        </div>`).join('');
+    }
+
+    function renderTopScorer(data) {
+      const p = Array.isArray(data) ? data[0] : null;
+      if (!p) {
+        document.getElementById('topScorer').innerHTML = `
+          <div style="text-align:center;padding:20px;">
+            <div style="font-size:40px;">🥇</div>
+            <div style="font-size:18px;font-weight:700;margin-top:8px;">Miroslav Klose</div>
+            <div style="font-size:13px;color:var(--text-muted);">🇩🇪 Germany</div>
+            <div style="font-size:42px;font-weight:800;color:var(--green-mid);line-height:1.2;margin-top:8px;">16</div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">All-time Goals</div>
+          </div>`;
+        return;
+      }
+      document.getElementById('topScorer').innerHTML = `
+        <div style="text-align:center;padding:10px;">
+          <div style="font-size:40px;">${p.flag || '🥇'}</div>
+          <div style="font-size:17px;font-weight:700;margin-top:8px;">${p.name}</div>
+          <div style="font-size:13px;color:var(--text-muted);">${p.country}</div>
+          <div style="font-size:42px;font-weight:800;color:var(--green-mid);line-height:1.2;margin-top:8px;">${p.goals}</div>
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;">All-time Goals</div>
+          <div style="font-size:12px;margin-top:8px;color:var(--text-muted);">
+            ${p.tournaments} tournaments · ${p.matches} matches · ${p.goals_per_match} goals/game
+          </div>
+        </div>`;
+    }
+
+    // Check API status indicator
+    async function updateAPIStatus() {
+      const el = document.getElementById('api-status');
+      const online = await checkAPIStatus();
+      el.className = 'api-badge ' + (online ? 'api-online' : 'api-offline');
+      el.textContent = online ? '🟢 API Live' : '🟡 Demo Mode';
+    }
+
+    // Init
+    updateAPIStatus();
+    loadDashboard();
+  </script>
+</body>
+</html>
