@@ -182,3 +182,11 @@ r.setex(cache_key, CACHE_TTL, json.dumps(data))
 ## Team
 Mahindra University — Software Engineering Course 2026
 Team of 7 students
+Kushal – SE23UARI073 : Matches Module
+Appana Saketh Krishna Rao – SE23UARI013 : Dashboard Module
+Adrija Bandi – SE23UARI004 : Players Module
+Bhogi Charan Tej – SE23UCSE240 : Tournament and Timeline Module
+Amrutha – SE23UCSE110 : Teams and Search Module
+T Nithya – S23UARI125 : Data and Testing Module
+K Sameehan — SE23UARI069 : Analytics module
+
